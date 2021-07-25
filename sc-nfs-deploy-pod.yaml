@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-deploy-claim-nfs
+  annotations:
+    volume.beta.kubernetes.io/storage-class: "freenas-nfs-csi"
+spec:
+  storageClassName: freenas-nfs-csi
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: ubuntu2104
+  name: ubuntu2104
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: ubuntu2104
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: ubuntu2104
+    spec:
+      volumes:
+       - name: shared-volume
+         persistentVolumeClaim:
+           claimName: test-deploy-claim-nfs
+      containers:
+      - image: ubuntu:rolling
+        imagePullPolicy: IfNotPresent
+        name: ubuntu2104
+        command: ["/bin/sleep", "3650d"]
+        volumeMounts:
+          - mountPath: "/data"
+            name: shared-volume
